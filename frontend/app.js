@@ -1,29 +1,9 @@
 // =========================================================
-// DATOS EN MEMORIA
-// Los productos viven en este array. Al recargar la página
-// se pierde todo lo añadido y vuelven los 2 de ejemplo.
+// DIRECCIÓN DE LA API (FASE 2)
+// Los productos ya no viven aquí: los guarda el backend.
+// Este fichero se los pide y le envía los cambios con fetch.
 // =========================================================
-let products = [
-  {
-    id: 1,
-    name: "MacBook Air 13",
-    category: "Portátiles",
-    price: 1199.99,
-    description: "Portátil ligero con chip M3 y 16 GB de RAM.",
-    createdAt: "2026-11-10T10:00:00.000Z"
-  },
-  {
-    id: 2,
-    name: "Auriculares inalámbricos",
-    category: "Audio",
-    price: 89.9,
-    description: "Con cancelación de ruido y 30 horas de batería.",
-    createdAt: "2026-11-15T17:30:00.000Z"
-  }
-];
-
-// Siguiente id que se asignará a un producto nuevo
-let nextId = 3;
+const API_URL = "http://localhost:3000/products";
 
 // id del producto que se está editando (null = estamos creando uno nuevo)
 let editingId = null;
@@ -54,10 +34,29 @@ function formatDate(isoDate) {
   return new Date(isoDate).toLocaleDateString("es-ES");
 }
 
+// Aviso común cuando el backend no responde
+function showConnectionError(error) {
+  console.error(error);
+  alert("No se puede conectar con el backend. ¿Está arrancado en " + API_URL + "?");
+}
+
 // =========================================================
-// LISTAR: dibuja la tabla a partir del array
+// CARGAR: pide la lista al backend (GET /products) y la dibuja
 // =========================================================
-function renderProducts() {
+async function loadProducts() {
+  try {
+    const response = await fetch(API_URL);
+    const products = await response.json();
+    renderProducts(products);
+  } catch (error) {
+    showConnectionError(error);
+  }
+}
+
+// =========================================================
+// LISTAR: dibuja la tabla a partir de la lista recibida
+// =========================================================
+function renderProducts(products) {
   // Vaciamos la tabla y la volvemos a llenar desde cero
   productList.innerHTML = "";
 
@@ -108,40 +107,44 @@ function addCell(row, text) {
 
 // =========================================================
 // GUARDAR: se ejecuta al enviar el formulario.
-// Si no estamos editando, CREA un producto; si sí, lo ACTUALIZA.
+// Si no estamos editando, CREA (POST); si sí, ACTUALIZA (PUT).
 // =========================================================
-form.addEventListener("submit", function (event) {
+form.addEventListener("submit", async function (event) {
   // Evita que el navegador recargue la página (su comportamiento por defecto)
   event.preventDefault();
 
-  if (editingId === null) {
-    // CREAR: construimos el producto con los valores del formulario
-    const newProduct = {
-      id: nextId,
-      name: nameInput.value.trim(),
-      category: categoryInput.value,
-      price: Number(priceInput.value),
-      description: descriptionInput.value.trim(),
-      createdAt: new Date().toISOString()
-    };
-    nextId = nextId + 1;
-    products.push(newProduct);
-  } else {
-    // EDITAR: buscamos el producto y cambiamos sus datos.
-    // El id y la fecha de creación no cambian.
-    const product = products.find(function (item) {
-      return item.id === editingId;
-    });
-    product.name = nameInput.value.trim();
-    product.category = categoryInput.value;
-    product.price = Number(priceInput.value);
-    product.description = descriptionInput.value.trim();
+  // Datos del formulario. El id y la fecha los pone el backend.
+  const productData = {
+    name: nameInput.value.trim(),
+    category: categoryInput.value,
+    price: Number(priceInput.value),
+    description: descriptionInput.value.trim()
+  };
+
+  try {
+    if (editingId === null) {
+      // CREAR: POST /products
+      await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(productData)
+      });
+    } else {
+      // EDITAR: PUT /products/:id
+      await fetch(API_URL + "/" + editingId, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(productData)
+      });
+    }
+  } catch (error) {
+    showConnectionError(error);
+    return;
   }
 
-  renderProducts();
-
-  // Dejamos el formulario limpio y en modo "Nuevo producto"
+  // Dejamos el formulario limpio y volvemos a pedir la lista al backend
   resetForm();
+  await loadProducts();
 });
 
 // =========================================================
@@ -174,29 +177,31 @@ cancelButton.addEventListener("click", function () {
 });
 
 // =========================================================
-// BORRAR: quita un producto del array a partir de su id
+// BORRAR: DELETE /products/:id
 // =========================================================
-function deleteProduct(id) {
+async function deleteProduct(id) {
   // Pedimos confirmación; si el usuario cancela, no hacemos nada
   const confirmed = confirm("¿Seguro que quieres borrarlo?");
   if (!confirmed) {
     return;
   }
 
-  // filter crea un array nuevo con todos los productos MENOS el del id indicado
-  products = products.filter(function (product) {
-    return product.id !== id;
-  });
+  try {
+    await fetch(API_URL + "/" + id, { method: "DELETE" });
+  } catch (error) {
+    showConnectionError(error);
+    return;
+  }
 
   // Si borramos el producto que se estaba editando, salimos del modo edición
   if (id === editingId) {
     resetForm();
   }
 
-  renderProducts();
+  await loadProducts();
 }
 
 // =========================================================
-// INICIO: al cargar la página, pintamos los productos de ejemplo
+// INICIO: al cargar la página, pedimos los productos al backend
 // =========================================================
-renderProducts();
+loadProducts();
