@@ -28,8 +28,8 @@ test("crear, editar, recargar y borrar un producto desde la web", async ({ page 
     dialog.accept();
   });
 
-  // La fila de la tabla que contiene nuestro producto
-  const row = page.locator("#product-list tr", { hasText: productName });
+  // La tarjeta del listado que contiene nuestro producto
+  const row = page.locator("#product-list .product-card", { hasText: productName });
 
   // --- CREAR ---
   await page.goto("/");
@@ -43,6 +43,9 @@ test("crear, editar, recargar y borrar un producto desde la web", async ({ page 
   await expect(row).toContainText("Audio");
   await expect(row).toContainText("10,50");
   await expect(row).toContainText("Creado por Playwright");
+
+  // El gráfico cuenta el producto en su categoría (la barra de Audio no está a 0)
+  await expect(page.locator("#category-chart .category-audio .chart-value")).not.toHaveText("0");
 
   // --- EDITAR ---
   await row.getByRole("button", { name: "Editar" }).click();
@@ -72,7 +75,7 @@ test("crear, editar, recargar y borrar un producto desde la web", async ({ page 
 });
 
 test("Cancelar la edición no cambia el producto", async ({ page }) => {
-  const row = page.locator("#product-list tr", { hasText: productName });
+  const row = page.locator("#product-list .product-card", { hasText: productName });
 
   // Creamos el producto
   await page.goto("/");

@@ -1,0 +1,41 @@
+# =========================================================
+# BLUEPRINT DE RENDER: describe los servicios que Render debe crear.
+# Render lo lee al hacer "New → Blueprint" con este repositorio.
+# Los secretos (sync: false) NO están aquí: se escriben en Render.
+# Guía completa: DESPLIEGUE.md
+# =========================================================
+services:
+  # ---------- BACKEND: la API NestJS ----------
+  - type: web
+    name: catalogo-api
+    runtime: node
+    plan: free
+    region: frankfurt
+    rootDir: backend
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start:prod
+    # Render comprueba que la API responde en esta ruta
+    healthCheckPath: /products
+    # No desplegar solo con cada push: lo ordena GitHub Actions
+    # cuando los tests pasan (ver .github/workflows/ci-cd.yml)
+    autoDeployTrigger: "off"
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      # Cadena de conexión de MongoDB Atlas (secreta: se pide al crear)
+      - key: MONGODB_URI
+        sync: false
+
+  # ---------- FRONTEND: la web estática ----------
+  - type: web
+    name: catalogo-web
+    runtime: static
+    region: frankfurt
+    # Al construir, reescribe config.js con la dirección real de la API
+    buildCommand: echo "const API_BASE_URL = \"$API_BASE_URL\";" > frontend/config.js
+    staticPublishPath: ./frontend
+    autoDeployTrigger: "off"
+    envVars:
+      # Dirección pública del backend, p. ej. https://catalogo-api.onrender.com
+      - key: API_BASE_URL
+        sync: false

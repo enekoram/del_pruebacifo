@@ -2,17 +2,25 @@
    Variables: colores y medidas que se reutilizan en todo el CSS
    ========================================================= */
 :root {
-  --color-background: #f3f5f9;
+  --color-background: #f4f5fb;
   --color-card: #ffffff;
-  --color-text: #1f2937;
+  --color-text: #1e1b4b;
   --color-muted: #6b7280;
-  --color-border: #e5e7eb;
+  --color-border: #e6e8f0;
   --color-primary: #4f46e5;
   --color-primary-dark: #4338ca;
   --color-danger: #dc2626;
-  --radius: 12px;
-  --shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
+  --radius: 16px;
+  --shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.06);
+  --shadow-hover: 0 2px 4px rgba(15, 23, 42, 0.06), 0 16px 32px rgba(15, 23, 42, 0.1);
 }
+
+/* Un color por categoría (app.js pone la clase en cada tarjeta y barra) */
+.category-laptops     { --category-color: #4f46e5; --category-soft: #eef2ff; }
+.category-phones      { --category-color: #0891b2; --category-soft: #ecfeff; }
+.category-peripherals { --category-color: #d97706; --category-soft: #fffbeb; }
+.category-audio       { --category-color: #db2777; --category-soft: #fdf2f8; }
+.category-others      { --category-color: #059669; --category-soft: #ecfdf5; }
 
 /* =========================================================
    Base de la página
@@ -22,35 +30,196 @@
 }
 
 body {
-  margin: 0 auto;
-  padding: 40px 16px;
-  max-width: 1000px;
+  margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   color: var(--color-text);
   background: var(--color-background);
   line-height: 1.5;
 }
 
-h1 {
-  margin: 0 0 32px;
-  font-size: 2rem;
-  text-align: center;
+/* Contenedor central: limita el ancho y separa las zonas con un grid */
+.page {
+  display: grid;
+  gap: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 16px 48px;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
 }
 
 h2 {
-  margin: 0 0 20px;
-  font-size: 1.25rem;
+  font-size: 1.15rem;
+}
+
+/* Iconos SVG: de línea, del color del texto y del tamaño de la letra */
+.icon {
+  width: 1.25em;
+  height: 1.25em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+}
+
+/* El atributo hidden debe ganar a cualquier otro estilo */
+[hidden] {
+  display: none !important;
 }
 
 /* =========================================================
-   Tarjetas: cada <section> se ve como una caja blanca
+   Cabecera (titular)
    ========================================================= */
-section {
-  background: var(--color-card);
+.hero {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  padding: 40px;
+  border-radius: 24px;
+  color: #fff;
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 55%, #db2777 100%);
+  box-shadow: 0 20px 40px rgba(79, 70, 229, 0.25);
+}
+
+/* Círculos decorativos de fondo */
+.hero::before,
+.hero::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.hero::before {
+  width: 320px;
+  height: 320px;
+  top: -140px;
+  right: -60px;
+}
+
+.hero::after {
+  width: 180px;
+  height: 180px;
+  bottom: -90px;
+  right: 220px;
+}
+
+.hero-icon {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  font-size: 2rem;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.hero h1 {
+  font-size: 2.25rem;
+  letter-spacing: -0.02em;
+}
+
+.hero-subtitle {
+  margin-top: 6px;
+  font-size: 1.05rem;
+  opacity: 0.9;
+}
+
+.hero-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hero-chips li {
+  padding: 4px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+/* =========================================================
+   Tarjetas de resumen (grid de 4 columnas que se adapta)
+   ========================================================= */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.stat-card {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 20px;
   border-radius: var(--radius);
+  background: var(--color-card);
   box-shadow: var(--shadow);
+}
+
+.stat-icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  font-size: 1.2rem;
+  border-radius: 14px;
+}
+
+.stat-icon-indigo { color: #4f46e5; background: #eef2ff; }
+.stat-icon-green  { color: #059669; background: #ecfdf5; }
+.stat-icon-amber  { color: #d97706; background: #fffbeb; }
+.stat-icon-pink   { color: #db2777; background: #fdf2f8; }
+
+.stat-label {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* =========================================================
+   Zona central: formulario y gráfico en 2 columnas
+   ========================================================= */
+.main-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+/* Caja blanca genérica */
+.card {
   padding: 28px;
-  margin-bottom: 28px;
+  border-radius: var(--radius);
+  background: var(--color-card);
+  box-shadow: var(--shadow);
+}
+
+.card h2 {
+  margin-bottom: 4px;
+}
+
+.card-subtitle {
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+  color: var(--color-muted);
 }
 
 /* =========================================================
@@ -60,12 +229,26 @@ form {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  margin-top: 16px;
+}
+
+/* Categoría y precio, uno al lado del otro */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 label {
-  font-size: 0.9rem;
-  font-weight: 600;
   margin-top: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
 }
 
 input,
@@ -75,9 +258,9 @@ textarea {
   padding: 10px 12px;
   font: inherit;
   color: inherit;
-  background: #fafbfc;
+  background: #f9fafb;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 10px;
 }
 
 /* Resalta el campo en el que estás escribiendo */
@@ -86,6 +269,7 @@ select:focus,
 textarea:focus {
   outline: none;
   border-color: var(--color-primary);
+  background: #fff;
   box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
 }
 
@@ -97,18 +281,26 @@ textarea {
    Botones
    ========================================================= */
 button {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
   padding: 10px 20px;
   font: inherit;
   font-weight: 600;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.form-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
 }
 
 /* Botón principal: Guardar */
 #submit-button {
-  align-self: flex-start;
-  margin-top: 16px;
   color: #fff;
   background: var(--color-primary);
 }
@@ -119,84 +311,207 @@ button {
 
 /* Botón secundario: Cancelar (solo visible al editar) */
 #cancel-button {
-  align-self: flex-start;
   color: var(--color-text);
   background: var(--color-border);
 }
 
-/* El atributo hidden debe ganar a cualquier otro estilo */
-[hidden] {
-  display: none !important;
-}
-
-/* Botones pequeños de cada fila de la tabla (los creará app.js) */
+/* Botones pequeños de cada tarjeta de producto (los crea app.js) */
 .button-edit,
 .button-delete {
-  padding: 6px 12px;
+  padding: 6px 10px;
   font-size: 0.85rem;
   background: transparent;
 }
 
 .button-edit {
   color: var(--color-primary);
-  border: 1px solid var(--color-primary);
 }
 
 .button-delete {
-  margin-left: 6px;
   color: var(--color-danger);
-  border: 1px solid var(--color-danger);
 }
 
 .button-edit:hover {
-  color: #fff;
-  background: var(--color-primary);
+  background: #eef2ff;
 }
 
 .button-delete:hover {
-  color: #fff;
-  background: var(--color-danger);
+  background: #fef2f2;
 }
 
 /* =========================================================
-   Tabla de productos
+   Gráfico de barras (lo dibuja app.js)
    ========================================================= */
-table {
-  width: 100%;
-  border-collapse: collapse;
+.chart {
+  display: grid;
+  gap: 16px;
 }
 
-th {
-  padding: 12px;
+/* Cada fila: etiqueta | barra | número */
+.chart-row {
+  display: grid;
+  grid-template-columns: 130px 1fr 32px;
+  gap: 12px;
+  align-items: center;
+}
+
+.chart-label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--category-color);
+}
+
+/* El "carril" gris y, dentro, la barra de color */
+.chart-track {
+  height: 14px;
+  border-radius: 999px;
+  background: #f1f2f7;
+  overflow: hidden;
+}
+
+.chart-bar {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--category-color);
+  transition: width 0.4s ease;
+}
+
+.chart-value {
+  font-weight: 700;
+  text-align: right;
+}
+
+/* =========================================================
+   Listado: grid de tarjetas de producto
+   ========================================================= */
+.products h2 {
+  margin-bottom: 16px;
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+.product-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+  border-radius: var(--radius);
+  border-top: 4px solid var(--category-color);
+  background: var(--color-card);
+  box-shadow: var(--shadow);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.product-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-hover);
+}
+
+.product-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.category-badge {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  padding: 4px 10px;
   font-size: 0.8rem;
-  text-align: left;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  font-weight: 600;
+  border-radius: 999px;
+  color: var(--category-color);
+  background: var(--category-soft);
+}
+
+.product-date {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  font-size: 0.8rem;
   color: var(--color-muted);
-  border-bottom: 2px solid var(--color-border);
 }
 
-td {
-  padding: 14px 12px;
-  border-bottom: 1px solid var(--color-border);
-  vertical-align: top;
+.product-card h3 {
+  font-size: 1.1rem;
 }
 
-/* Resalta la fila al pasar el ratón */
-tbody tr:hover {
-  background: #f9fafb;
+.product-description {
+  flex-grow: 1;
+  font-size: 0.9rem;
+  color: var(--color-muted);
+}
+
+.product-card-footer {
+  display: flex;
+  flex-wrap: wrap; /* si no cabe, los botones bajan a otra línea */
+  gap: 8px;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+}
+
+/* Editar y Borrar, siempre en la misma línea */
+.product-actions {
+  display: flex;
+  gap: 2px;
+}
+
+.product-price {
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+/* Mensaje cuando no hay productos */
+.empty-message {
+  grid-column: 1 / -1;
+  padding: 40px;
+  text-align: center;
+  color: var(--color-muted);
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius);
 }
 
 /* =========================================================
-   Pantallas pequeñas (móvil): la tabla se puede desplazar
+   Pantallas medianas y pequeñas: todo en una sola columna
    ========================================================= */
-@media (max-width: 700px) {
-  section {
-    padding: 20px;
-    overflow-x: auto;
+@media (max-width: 860px) {
+  .main-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .hero {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 28px 20px;
   }
 
-  h1 {
-    font-size: 1.5rem;
+  .hero h1 {
+    font-size: 1.75rem;
+  }
+
+  .card {
+    padding: 20px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-row {
+    grid-template-columns: 110px 1fr 28px;
   }
 }

@@ -8,57 +8,166 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <h1>Catálogo de productos tecnológicos</h1>
+  <div class="page">
 
-  <!-- FORMULARIO: sirve para crear y también para editar productos -->
-  <section>
-    <h2 id="form-title">Nuevo producto</h2>
+    <!-- =====================================================
+         CABECERA: titular de la tienda
+         ===================================================== -->
+    <header class="hero">
+      <div class="hero-icon">
+        <!-- Icono: bolsa de la compra -->
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+          <path d="M3 6h18"/>
+          <path d="M16 10a4 4 0 0 1-8 0"/>
+        </svg>
+      </div>
+      <div>
+        <h1>Catálogo de tecnología</h1>
+        <p class="hero-subtitle">
+          Gestiona tus productos y mira de un vistazo cómo está tu inventario.
+        </p>
+        <!-- Las tres piezas de la aplicación -->
+        <ul class="hero-chips">
+          <li>Frontend · HTML, CSS y JS</li>
+          <li>API · NestJS</li>
+          <li>Base de datos · MongoDB</li>
+        </ul>
+      </div>
+    </header>
 
-    <form id="product-form">
-      <label for="name">Nombre *</label>
-      <input type="text" id="name" required>
+    <!-- =====================================================
+         RESUMEN: 4 tarjetas con datos calculados en app.js
+         ===================================================== -->
+    <section class="stats" aria-label="Resumen del catálogo">
+      <article class="stat-card">
+        <div class="stat-icon stat-icon-indigo">
+          <!-- Icono: caja -->
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M21 8 12 3 3 8l9 5 9-5z"/>
+            <path d="M3 8v8l9 5 9-5V8"/>
+            <path d="M12 13v8"/>
+          </svg>
+        </div>
+        <div>
+          <p class="stat-label">Productos</p>
+          <p class="stat-value" id="stat-count">0</p>
+        </div>
+      </article>
 
-      <label for="category">Categoría *</label>
-      <select id="category" required>
-        <option value="">-- Elige una categoría --</option>
-        <option value="Portátiles">Portátiles</option>
-        <option value="Móviles">Móviles</option>
-        <option value="Periféricos">Periféricos</option>
-        <option value="Audio">Audio</option>
-        <option value="Otros">Otros</option>
-      </select>
+      <article class="stat-card">
+        <div class="stat-icon stat-icon-green">
+          <!-- Icono: moneda de euro -->
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M15 8.5a4 4 0 1 0 0 7"/>
+            <path d="M7.5 11h6M7.5 13h6"/>
+          </svg>
+        </div>
+        <div>
+          <p class="stat-label">Valor total</p>
+          <p class="stat-value" id="stat-total">0,00 €</p>
+        </div>
+      </article>
 
-      <label for="price">Precio (€) *</label>
-      <input type="number" id="price" min="0" step="0.01" required>
+      <article class="stat-card">
+        <div class="stat-icon stat-icon-amber">
+          <!-- Icono: gráfico de barras -->
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 21h18"/>
+            <path d="M6 17v-6M12 17V5M18 17v-4"/>
+          </svg>
+        </div>
+        <div>
+          <p class="stat-label">Precio medio</p>
+          <p class="stat-value" id="stat-average">0,00 €</p>
+        </div>
+      </article>
 
-      <label for="description">Descripción</label>
-      <textarea id="description" rows="3"></textarea>
+      <article class="stat-card">
+        <div class="stat-icon stat-icon-pink">
+          <!-- Icono: etiqueta -->
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/>
+            <circle cx="7.5" cy="7.5" r="1.5"/>
+          </svg>
+        </div>
+        <div>
+          <p class="stat-label">Categorías en uso</p>
+          <p class="stat-value" id="stat-categories">0</p>
+        </div>
+      </article>
+    </section>
 
-      <button type="submit" id="submit-button">Guardar</button>
-      <!-- Solo se mostrará al editar un producto -->
-      <button type="button" id="cancel-button" hidden>Cancelar</button>
-    </form>
-  </section>
+    <!-- =====================================================
+         ZONA CENTRAL: formulario + gráfico, uno al lado del otro
+         ===================================================== -->
+    <div class="main-grid">
 
-  <!-- LISTADO: app.js rellenará el <tbody> con una fila por producto -->
-  <section>
-    <h2>Productos</h2>
+      <!-- FORMULARIO: sirve para crear y también para editar productos -->
+      <section class="card" id="form-card">
+        <h2 id="form-title">Nuevo producto</h2>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Nombre</th>
-          <th>Categoría</th>
-          <th>Precio</th>
-          <th>Descripción</th>
-          <th>Fecha de creación</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody id="product-list"></tbody>
-    </table>
-  </section>
+        <form id="product-form">
+          <label for="name">Nombre *</label>
+          <input type="text" id="name" placeholder="Ej.: Teclado mecánico" required>
 
+          <!-- Categoría y precio, en dos columnas -->
+          <div class="form-row">
+            <div class="form-field">
+              <label for="category">Categoría *</label>
+              <select id="category" required>
+                <option value="">-- Elige una --</option>
+                <option value="Portátiles">Portátiles</option>
+                <option value="Móviles">Móviles</option>
+                <option value="Periféricos">Periféricos</option>
+                <option value="Audio">Audio</option>
+                <option value="Otros">Otros</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label for="price">Precio (€) *</label>
+              <input type="number" id="price" min="0" step="0.01" placeholder="0,00" required>
+            </div>
+          </div>
+
+          <label for="description">Descripción</label>
+          <textarea id="description" rows="3" placeholder="Opcional"></textarea>
+
+          <div class="form-buttons">
+            <button type="submit" id="submit-button">
+              <!-- Icono: check -->
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M20 6 9 17l-5-5"/>
+              </svg>
+              Guardar
+            </button>
+            <!-- Solo se muestra al editar un producto -->
+            <button type="button" id="cancel-button" hidden>Cancelar</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- GRÁFICO: app.js dibuja una barra por categoría -->
+      <section class="card">
+        <h2>Productos por categoría</h2>
+        <p class="card-subtitle">Se actualiza solo al crear, editar o borrar.</p>
+        <div id="category-chart" class="chart"></div>
+      </section>
+    </div>
+
+    <!-- =====================================================
+         LISTADO: app.js rellena este grid con una tarjeta por producto
+         ===================================================== -->
+    <section class="products">
+      <h2>Productos</h2>
+      <div id="product-list" class="product-grid"></div>
+    </section>
+
+  </div>
+
+  <!-- Configuración (dirección de la API); va antes que app.js porque este la usa -->
+  <script src="config.js"></script>
   <!-- Lógica de la página -->
   <script src="app.js"></script>
 </body>

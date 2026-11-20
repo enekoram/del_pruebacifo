@@ -1,0 +1,79 @@
+# =========================================================
+# GITHUB ACTIONS: CI/CD del catálogo
+# 1. test   → en cada push y pull request: arranca un MongoDB,
+#             compila el backend y pasa los tests (API + navegador).
+# 2. deploy → solo en push a main y SOLO si los tests pasan:
+#             avisa a Render (deploy hooks) para que despliegue.
+# Guía completa: DESPLIEGUE.md
+# =========================================================
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    name: Tests (API + navegador)
+    runs-on: ubuntu-latest
+
+    # Un MongoDB de usar y tirar, solo para los tests
+    services:
+      mongodb:
+        image: mongo:8
+        ports:
+          - 27017:27017
+
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      - name: Instalar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            e2e/package-lock.json
+
+      - name: Backend · instalar dependencias
+        working-directory: backend
+        run: npm ci
+
+      - name: Backend · compilar
+        working-directory: backend
+        run: npm run build
+
+      - name: Backend · tests de la API
+        working-directory: backend
+        run: npm run test:e2e
+
+      - name: E2E · instalar dependencias
+        working-directory: e2e
+        run: npm ci
+
+      # Playwright arranca solo el backend y la web (ver playwright.config.js)
+      # y usa el Google Chrome que ya trae la máquina de GitHub
+      - name: E2E · tests en el navegador
+        working-directory: e2e
+        run: npm test
+
+  deploy:
+    name: Desplegar en Render
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      # Las URLs de los deploy hooks son secretos del repositorio
+      - name: Desplegar backend
+        env:
+          HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_BACKEND }}
+        run: curl --fail --silent --show-error -X POST "$HOOK_URL"
+
+      - name: Desplegar frontend
+        env:
+          HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_FRONTEND }}
+        run: curl --fail --silent --show-error -X POST "$HOOK_URL"

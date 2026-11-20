@@ -131,6 +131,23 @@ Requisito: **MongoDB arrancado**.
 | 20/11/2026 | *(tests, Claude)* Los tests en el navegador usan **Playwright** en una carpeta aparte `/e2e`, con el **Chrome instalado** (`channel: "chrome"`) | No mezclar dependencias con el backend ni descargar otro navegador (150-300 MB) |
 | 20/11/2026 | *(tests, Claude)* Los tests en el navegador usan la app real (8080 → 3000 → `catalog`) con productos `Producto E2E <número>` que se borran en `afterEach` | La URL de la API está fija en el frontend; levantar otra copia en otro puerto obligaría a cambiarlo |
 | 20/11/2026 | *(tests, Claude)* Se ignoran en git `test-results/` y `playwright-report/` | Son resultados que se regeneran |
+| 20/11/2026 | **Rediseño del frontend** (lo pidió el usuario: "más bonito, con gráfico, titular, grid e iconos"). El usuario rechazó las preguntas de opciones con "toma decisiones tú": **a partir de ahora Claude decide y lo apunta aquí** | Preferencia explícita del usuario |
+| 20/11/2026 | *(diseño, Claude)* Gráfico de **barras con CSS puro** (productos por categoría), dibujado por `renderChart()` en `app.js` | Sin librerías (el CLAUDE.md pide JS puro); se entiende leyendo el código |
+| 20/11/2026 | *(diseño, Claude)* Iconos **SVG escritos en el propio código** (estilo línea, de color con `currentColor`) | Sin dependencias ni descargas |
+| 20/11/2026 | *(diseño, Claude)* El listado pasa de **tabla a tarjetas en un grid** (`#product-list` es ahora un `div.product-grid`) | Aspecto más de tienda. Obliga a cambiar el selector del test del navegador (`tr` → `.product-card`) |
+| 20/11/2026 | *(diseño, Claude)* Estilo claro moderno: cabecera con degradado índigo-violeta-rosa, 4 tarjetas de resumen (productos, valor total, precio medio, categorías en uso) y un color por categoría | Continúa el diseño anterior |
+| 20/11/2026 | *(diseño, Claude)* Layout con **CSS Grid**: `.page` (zonas), `.stats` (`auto-fit`), `.main-grid` (formulario + gráfico, 2 columnas → 1 en < 860 px) y `.product-grid` (`auto-fill`, tarjetas de ≥ 260 px) | Lo pidió el usuario; se adapta solo al móvil |
+| 20/11/2026 | *(diseño, Claude)* Se mantienen todos los `id` del formulario; al pulsar "Editar" la página sube hasta el formulario (`scrollIntoView`) | Los tests siguen valiendo; el formulario puede quedar fuera de la pantalla |
+| 20/11/2026 | **Despliegue en Render** (lo pidió el usuario: Render free + GitHub Actions). Cambia las reglas "sin despliegue" y "tests complejos fuera de alcance" del CLAUDE.md | Petición del usuario |
+| 20/11/2026 | *(despliegue, Claude)* **Base de datos en MongoDB Atlas M0** (gratis) | Render no ofrece MongoDB (solo PostgreSQL y Key Value) |
+| 20/11/2026 | *(despliegue, Claude)* **2 servicios en Render** con un Blueprint (`render.yaml`): `catalogo-api` (Web Service Node, free, `npm ci && npm run build` → `npm run start:prod`, health check `/products`) y `catalogo-web` (Static Site), los dos en Frankfurt | Mantiene separadas las piezas frontend y backend, como en local |
+| 20/11/2026 | *(despliegue, Claude)* **GitHub Actions** (`.github/workflows/ci-cd.yml`): el job `test` (MongoDB `mongo:8` como servicio, build, tests de la API y tests en el navegador con Chrome) y el job `deploy` (solo en push a `main` y si `test` pasa: `curl -X POST` a los **deploy hooks**, guardados como secretos) | "Si los tests fallan, no se despliega". Por eso Render tiene `autoDeployTrigger: "off"` |
+| 20/11/2026 | *(despliegue, Claude)* La dirección de la API pasa a **`frontend/config.js`** (`API_BASE_URL`). En Render, el build del Static Site lo reescribe con la variable de entorno `API_BASE_URL` | Una sola línea distinta entre local y producción, sin tocar `app.js` |
+| 20/11/2026 | *(despliegue, Claude)* `main.ts` escucha en `process.env.PORT ?? 3000` | Render asigna el puerto |
+| 20/11/2026 | *(despliegue, Claude)* CORS sigue abierto (`enableCors()`) | No hay login; restringir el origen no protegería los datos. Se avisa en DESPLIEGUE.md |
+| 20/11/2026 | *(despliegue, Claude)* Node 24 en Render (`NODE_VERSION`) y en Actions | Versión LTS; en local se usa la 26 |
+| 20/11/2026 | *(despliegue, Claude)* En Playwright se fija `serve@14.2.8` | Que en Actions se use la misma versión que en local |
+| 20/11/2026 | *(despliegue, Claude)* El token nuevo de GitHub necesita **Contents + Workflows: Read and write** | GitHub rechaza subir `.github/workflows/` sin el permiso Workflows. Además, el token antiguo debe revocarse |
 | 20/11/2026 | *(fase 3, Claude)* Limitación conocida: si se pide un id con formato no válido (p. ej. `/products/abc`), la API responde 500 en lugar de 404 | El frontend siempre usa ids reales; manejarlo añadiría código. Se puede mejorar si se pide |
 
 > Las decisiones del 19/11 sobre categoría, precio, validación, borrar, editar, datos de ejemplo, fecha y pasos las tomó Claude porque el usuario se las delegó ("toma tú las decisiones").
@@ -205,6 +222,23 @@ Requisito: **MongoDB arrancado**.
     - Se corrigió una comprobación del test B que podía darse por buena antes de que cargara la tabla: ahora espera a la respuesta de la API.
     - **Prueba de que los tests detectan fallos:** se estropeó a propósito el `update` del servicio (`returnDocument: 'before'`) y falló justo el test de editar (1 failed / 8 passed). Después se restauró y volvieron a pasar 9/9.
     - Commit **`tests`** (el nombre lo eligió Claude) y push.
+25. **Rediseño del frontend:** el usuario pidió un diseño más bonito con gráfico, titular, grid e iconos. Claude propuso un plan con preguntas y el usuario las rechazó: "ya te dije, toma decisiones tú" (guardado también en la memoria de Claude).
+    - Se reescribieron `index.html` (cabecera, resumen, formulario + gráfico, grid de productos), `styles.css` (CSS Grid, iconos, colores por categoría, adaptación a móvil) y `app.js`. En `app.js` se añadieron `CATEGORIES` con iconos, `svgIcon()`, `findCategory()`, `renderStats()`, `renderChart()`, las tarjetas en `renderProducts()` y `scrollIntoView` al editar. La parte de `fetch` no cambió.
+    - Test del navegador: selector `tr` → `.product-card` y una comprobación nueva de que el gráfico cuenta el producto creado. **2/2 pasan.** Los tests de la API, **9/9**.
+    - Claude revisó capturas de escritorio (1280 px) y móvil (390 px) hechas con Playwright y corrigió los botones Editar/Borrar, que se apilaban y después se salían de la tarjeta (ahora `.product-actions` y `flex-wrap`).
+    - Sin commit todavía.
+26. **Preparación del despliegue en Render:** el usuario pidió una guía y los ficheros para subir el fullstack a Render (free tier) usando GitHub Actions.
+    - Ficheros nuevos: **`DESPLIEGUE.md`** (guía paso a paso: Atlas → token → Blueprint → deploy hooks → día a día → problemas → seguridad), **`render.yaml`**, **`.github/workflows/ci-cd.yml`** y **`frontend/config.js`**.
+    - Cambios: `main.ts` (`PORT`), `index.html` (carga `config.js` antes que `app.js`), `app.js` (`API_URL = API_BASE_URL + "/products"`), `playwright.config.js` (`serve@14.2.8`) y `CLAUDE.md` (stack y alcance).
+    - Verificado en local: los 2 YAML se leen bien (ruby); el comando de build del Static Site genera un `config.js` válido; `node dist/main.js` con `PORT=3999` responde 200; los tests pasan (API 9/9, navegador 2/2).
+    - **No verificado:** el despliegue real en Render/Atlas (lo hace el usuario con su cuenta) y que Render acepte el campo `autoDeployTrigger` (la guía explica qué hacer si no).
+    - Sin commit todavía. El push necesitará un token con permiso **Workflows**.
+27. **El usuario pide que Claude haga el despliegue entero** ("¿no lo puedes hacer tú todo?"). Plan aprobado: el usuario solo aprueba los inicios de sesión y crea las claves; Claude usa las herramientas de línea de comandos y las APIs. Los secretos van en **`~/.catalogo-secrets/`** (permisos 700/600, fuera del proyecto y de git) y nunca se muestran en el chat.
+    - **Atlas CLI 1.60.1** instalada en `~/tools/bin/atlas` (checksum OK; firma MongoDB `4XWMY46275`). El usuario aprobó `atlas auth login` en el navegador.
+    - Atlas: una organización y "Project 0", que ya tenía un **M0 `Cluster0` (AWS París, EU_WEST_3)**, el usuario `enekoram_db_user` y la IP `83.247.137.2/32`. **Se reutiliza `Cluster0`** (solo se permite un M0 por proyecto) y no se tocó lo existente.
+    - Creado el usuario **`catalogo_app`** (solo `readWrite@catalog`) con una contraseña aleatoria (`openssl rand -hex 24`) en `~/.catalogo-secrets/atlas_db_password`. Añadido el acceso **`0.0.0.0/0`** ("Render free").
+    - `MONGODB_URI` guardada en `~/.catalogo-secrets/mongodb_uri`. `mongosh` hace ping ✅ (el primer intento dio *bad auth* mientras se activaba el usuario). El backend compilado contra Atlas: GET/POST/DELETE ✅, y la BD quedó vacía.
+    - **GitHub CLI (`gh`)** instalada en `~/tools/bin/gh` (checksum OK).
 
 ---
 
@@ -224,5 +258,10 @@ Requisito: **MongoDB arrancado**.
 - [x] Commit y push de la fase 3 (`fase3`).
 - [x] Tests del CRUD full stack: 9 de la API + 2 en el navegador, todos pasan.
 - [x] Commit y push de los tests (`tests`).
+- [x] Rediseño del frontend (gráfico, titular, grid, iconos); tests pasan.
+- [ ] El usuario revisa el diseño en el navegador.
+- [x] Ficheros y guía de despliegue (Render + Atlas + GitHub Actions) preparados y verificados en local.
+- [ ] Commit del rediseño y el despliegue (cuando el usuario lo pida).
+- [ ] **Usuario:** seguir `DESPLIEGUE.md`: crear Atlas M0 → revocar el token antiguo y crear uno nuevo con Contents + Workflows → push → Blueprint en Render → deploy hooks como secretos en GitHub.
 - [ ] (Opcional) Borrar el producto de prueba "Monitor 27".
 - [ ] **Revocar el token** que se pegó en el chat (GitHub → Settings → Developer settings → Fine-grained tokens), crear uno nuevo y, en el próximo push, introducirlo desde la app Terminal (o pedírselo a Claude para que actualice el llavero sin pegarlo en el chat).

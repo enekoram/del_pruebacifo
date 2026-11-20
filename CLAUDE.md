@@ -9,7 +9,10 @@ Prima la claridad sobre la sofisticación. Menos código y más simple es mejor.
 - Frontend: HTML, CSS3 y JavaScript puro (sin frameworks, sin bundlers).
 - Backend: NestJS (TypeScript).
 - Base de datos: MongoDB en local, con Mongoose (@nestjs/mongoose).
-- Todo en local. Sin autenticación, sin Docker, sin despliegue.
+- Desarrollo en local. Sin autenticación ni Docker en local.
+- Despliegue (añadido a petición del usuario): Render free (API = Web Service,
+  web = Static Site) + MongoDB Atlas M0, con GitHub Actions (tests → deploy
+  hooks). Ver DESPLIEGUE.md, render.yaml y .github/workflows/ci-cd.yml.
 - Git para guardar puntos de control. Commits y push únicamente cuando el
   usuario los pida. Remoto: https://github.com/enekoram/del_pruebacifo.git
   (público; autenticación HTTPS con token guardado en el llavero de macOS).
@@ -18,8 +21,8 @@ Prima la claridad sobre la sofisticación. Menos código y más simple es mejor.
 - Entidad única: Producto con los campos nombre, categoría, precio,
   descripción y fecha de creación.
 - Funciones: crear, listar, editar y borrar (CRUD completo).
-- Fuera de alcance: login, roles, tests complejos, paginación, subida de
-  imágenes, despliegue. Si algo parece necesario, preguntar antes.
+- Fuera de alcance: login, roles, paginación, subida de imágenes.
+  Si algo parece necesario, preguntar antes.
 
 ## Fases (en este orden; no adelantar la siguiente sin mi aprobación)
 1. FASE 1 · Frontend solo. Una web HTML + CSS + JS con el formulario y el

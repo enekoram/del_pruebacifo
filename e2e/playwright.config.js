@@ -25,7 +25,7 @@ export default defineConfig({
       reuseExistingServer: true
     },
     {
-      command: "npx serve ../frontend -l 8080",
+      command: "npx serve@14.2.8 ../frontend -l 8080",
       url: "http://localhost:8080",
       reuseExistingServer: true
     }
