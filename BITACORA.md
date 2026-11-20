@@ -12,7 +12,7 @@ Se lee al empezar cada sesión y se actualiza al terminar cada paso o al tomar u
 - **Fase 3** (MongoDB + Mongoose): **TERMINADA y comprobada** el 20/11/2026. Los datos sobreviven a reiniciar el backend; el usuario lo comprobó en el navegador y dio el visto bueno.
 - **🎉 Proyecto completo:** las 3 fases están terminadas. Flujo final: navegador → fetch → API REST (NestJS) → Mongoose → MongoDB.
 - **Siguiente:** nada pendiente del alcance del CLAUDE.md. Cualquier mejora nueva hay que proponerla y aprobarla antes.
-- **Git:** commits `fase1`, `fase1 completa`, `bitácora: subida a GitHub…`, `fase2` y `fase3`, en `origin/main`.
+- **Git:** commits `fase1`, `fase1 completa`, `bitácora: subida a GitHub…`, `fase2`, `fase3` y `tests`, en `origin/main`.
 - **⚠️ Seguridad pendiente:** el token se pegó en el chat, así que hay que **revocarlo y crear otro** (ver Pendientes).
 
 ### Cómo arrancar y ver la aplicación (fase 3)
@@ -25,6 +25,12 @@ Hacen falta **tres programas**, cada uno en su propia ventana de la app Terminal
 - Si el backend no está arrancado, la web muestra el aviso "No se puede conectar con el backend…".
 - Los productos **ya no se pierden** al recargar la web ni al reiniciar el backend: están en MongoDB (`~/mongodb/data`).
 - **Ver los datos directamente en la base de datos:** `~/mongodb/bin/mongosh catalog` y dentro `db.products.find()` (salir con `exit`).
+
+### Cómo ejecutar los tests
+Requisito: **MongoDB arrancado**.
+1. **Tests de la API (backend + MongoDB):** `cd backend` y `npm run test:e2e`. Son 9 tests. Usan la BD **`catalog_test`**, que vacían al empezar, así que **no tocan** `catalog`.
+2. **Tests en el navegador (web + API + MongoDB):** `cd e2e` y `npm test`. Son 2 tests y abren Google Chrome en modo invisible. Si el backend o la web no están arrancados, Playwright los arranca solo. Trabajan sobre la BD real `catalog`, pero solo con productos llamados `Producto E2E …`, que borran siempre al terminar.
+   - Para **ver el navegador** mientras hace las pruebas: `npx playwright test --headed`.
 
 ### Ficheros actuales
 | Fichero | Qué es | Estado |
@@ -41,6 +47,11 @@ Hacen falta **tres programas**, cada uno en su propia ventana de la app Terminal
 | `backend/src/products/products.controller.ts` | Rutas HTTP: GET/POST `/products`, GET/PUT/DELETE `/products/:id`. El id es texto | Hecho (fase 3) |
 | `backend/src/products/products.service.ts` | Lógica: usa el modelo de Mongoose (`find`, `findById`, `create`, `findByIdAndUpdate`, `findByIdAndDelete`) | Hecho (fase 3) |
 | `backend/src/products/products.module.ts` | Agrupa el controlador, el servicio y el modelo `Product` (`MongooseModule.forFeature`) | Hecho (fase 3) |
+| `backend/test/products.e2e-spec.ts` | Tests de la API: 9 tests (crear, obtener, listar, editar, borrar, 404 y que el dato está en MongoDB) | Hecho, pasan |
+| `backend/vitest.config.e2e.ts` | Config de esos tests: `MONGODB_URI` → `catalog_test` | Modificado |
+| `e2e/package.json` | Proyecto aparte solo para Playwright (`@playwright/test` 1.65.1) | Hecho |
+| `e2e/playwright.config.js` | Config: web en 8080, Chrome del Mac y arranque automático de los servidores si no están | Hecho |
+| `e2e/tests/crud.spec.js` | Tests en el navegador: 2 tests (crear → editar → recargar → borrar, y Cancelar) | Hecho, pasan |
 | `~/mongodb/` (fuera del proyecto) | MongoDB instalado: `bin/` (`mongod`, `mongosh`) y `data/` (los datos) | Instalado (fase 3) |
 | `backend/package.json`, `tsconfig*.json`, `nest-cli.json`… | Configuración generada por el CLI de Nest | Generado |
 
@@ -113,6 +124,13 @@ Hacen falta **tres programas**, cada uno en su propia ventana de la app Terminal
 | 20/11/2026 | *(fase 3, Claude)* La API devuelve `id` en lugar de `_id` (con `toJSON.transform` en el esquema) y no envía `__v` (`versionKey: false`) | Así **el frontend no cambia**, como pide el CLAUDE.md. Recomendación de Claude, sin respuesta del usuario |
 | 20/11/2026 | *(fase 3, Claude)* `createdAt` es un `@Prop({ default: Date.now })` explícito (no la opción `timestamps` de Mongoose) | Se ve en el esquema de dónde sale la fecha y no añade `updatedAt` |
 | 20/11/2026 | *(fase 3, Claude)* `product.ts` se sustituye por `product.schema.ts`, que contiene el esquema y `ProductInput` | Un único fichero con la forma de los datos |
+| 20/11/2026 | **Tests** (los pidió el usuario después de la fase 3; el CLAUDE.md deja fuera los "tests complejos", así que se preguntó y el usuario respondió "lo que quieras"). Claude eligió **A + B**: tests de la API y tests en el navegador | A muestra que el servidor y la BD funcionan; B, que todo encaja de punta a punta |
+| 20/11/2026 | *(tests, Claude)* Los tests de la API usan **Vitest + supertest**, que ya instaló el CLI de Nest | Sin dependencias nuevas |
+| 20/11/2026 | *(tests, Claude)* `app.module.ts` lee la dirección de MongoDB de `MONGODB_URI`, con `catalog` por defecto. Los tests de la API usan `catalog_test` | No mezclar los datos de los tests con los reales |
+| 20/11/2026 | *(tests, Claude)* Los tests de la API cuentan una "historia" en orden (crear → obtener → listar → editar → borrar) y comparten el `id` | Se leen de arriba abajo; más didáctico que tests independientes |
+| 20/11/2026 | *(tests, Claude)* Los tests en el navegador usan **Playwright** en una carpeta aparte `/e2e`, con el **Chrome instalado** (`channel: "chrome"`) | No mezclar dependencias con el backend ni descargar otro navegador (150-300 MB) |
+| 20/11/2026 | *(tests, Claude)* Los tests en el navegador usan la app real (8080 → 3000 → `catalog`) con productos `Producto E2E <número>` que se borran en `afterEach` | La URL de la API está fija en el frontend; levantar otra copia en otro puerto obligaría a cambiarlo |
+| 20/11/2026 | *(tests, Claude)* Se ignoran en git `test-results/` y `playwright-report/` | Son resultados que se regeneran |
 | 20/11/2026 | *(fase 3, Claude)* Limitación conocida: si se pide un id con formato no válido (p. ej. `/products/abc`), la API responde 500 en lugar de 404 | El frontend siempre usa ids reales; manejarlo añadiría código. Se puede mejorar si se pide |
 
 > Las decisiones del 19/11 sobre categoría, precio, validación, borrar, editar, datos de ejemplo, fecha y pasos las tomó Claude porque el usuario se las delegó ("toma tú las decisiones").
@@ -181,6 +199,12 @@ Hacen falta **tres programas**, cada uno en su propia ventana de la app Terminal
     - Falta la prueba del usuario en el navegador.
 22. Claude abrió la web. El usuario creó "Prueba fase 3" y pidió reiniciar el backend. Claude lo paró del todo y lo arrancó de nuevo, y los 2 productos seguían ahí. El usuario dio el **visto bueno de la fase 3**: **proyecto completo**.
 23. Commit **`fase3`** (el nombre lo eligió Claude) y push.
+24. **Tests:** el usuario pidió tests del CRUD "full stack". Claude propuso A (API), B (navegador) o A + B y una BD de test aparte, y el usuario respondió "lo que quieras".
+    - **A (API):** `MONGODB_URI` configurable, `vitest.config.e2e.ts` con `catalog_test` y `backend/test/products.e2e-spec.ts`. **9/9 tests pasan.** Sin errores de tipos (`tsc`). `catalog` sin tocar (seguía con 2 productos).
+    - **B (navegador):** carpeta `/e2e` con Playwright 1.65.1 y el Chrome del Mac, `playwright.config.js` y `tests/crud.spec.js`. **2/2 tests pasan**, y tras ellos `catalog` seguía con sus 2 productos.
+    - Se corrigió una comprobación del test B que podía darse por buena antes de que cargara la tabla: ahora espera a la respuesta de la API.
+    - **Prueba de que los tests detectan fallos:** se estropeó a propósito el `update` del servicio (`returnDocument: 'before'`) y falló justo el test de editar (1 failed / 8 passed). Después se restauró y volvieron a pasar 9/9.
+    - Commit **`tests`** (el nombre lo eligió Claude) y push.
 
 ---
 
@@ -198,5 +222,7 @@ Hacen falta **tres programas**, cada uno en su propia ventana de la app Terminal
 - [x] Fase 3: MongoDB instalado y backend conectado con Mongoose; probado con `curl`, `mongosh` y reiniciando el backend.
 - [x] El usuario prueba la fase 3 en el navegador y da el visto bueno.
 - [x] Commit y push de la fase 3 (`fase3`).
+- [x] Tests del CRUD full stack: 9 de la API + 2 en el navegador, todos pasan.
+- [x] Commit y push de los tests (`tests`).
 - [ ] (Opcional) Borrar el producto de prueba "Monitor 27".
 - [ ] **Revocar el token** que se pegó en el chat (GitHub → Settings → Developer settings → Fine-grained tokens), crear uno nuevo y, en el próximo push, introducirlo desde la app Terminal (o pedírselo a Claude para que actualice el llavero sin pegarlo en el chat).

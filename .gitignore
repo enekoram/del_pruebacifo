@@ -10,3 +10,7 @@ dist/
 
 # Caché del compilador de TypeScript
 *.tsbuildinfo
+
+# Resultados e informes de Playwright (se regeneran al pasar los tests)
+test-results/
+playwright-report/

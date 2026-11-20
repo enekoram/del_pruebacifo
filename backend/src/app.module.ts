@@ -8,8 +8,12 @@ import { ProductsModule } from './products/products.module.js';
 // =========================================================
 @Module({
   imports: [
-    // Conexión a MongoDB en local, base de datos "catalog"
-    MongooseModule.forRoot('mongodb://localhost:27017/catalog'),
+    // Conexión a MongoDB en local, base de datos "catalog".
+    // Los tests la cambian por "catalog_test" con la variable MONGODB_URI,
+    // para no tocar los datos reales.
+    MongooseModule.forRoot(
+      process.env.MONGODB_URI ?? 'mongodb://localhost:27017/catalog',
+    ),
     ProductsModule,
   ],
 })
