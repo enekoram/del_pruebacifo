@@ -12,8 +12,9 @@ Se lee al empezar cada sesión y se actualiza al terminar cada paso o al tomar u
 - **Fase 3** (MongoDB + Mongoose): **TERMINADA y comprobada** el 20/11/2026. Los datos sobreviven a reiniciar el backend; el usuario lo comprobó en el navegador y dio el visto bueno.
 - **🎉 Proyecto completo:** las 3 fases están terminadas. Flujo final: navegador → fetch → API REST (NestJS) → Mongoose → MongoDB.
 - **Siguiente:** nada pendiente del alcance del CLAUDE.md. Cualquier mejora nueva hay que proponerla y aprobarla antes.
-- **Git:** commits `fase1`, `fase1 completa`, `bitácora: subida a GitHub…`, `fase2`, `fase3` y `tests`, en `origin/main`.
-- **⚠️ Seguridad pendiente:** el token se pegó en el chat, así que hay que **revocarlo y crear otro** (ver Pendientes).
+- **Git:** commits `fase1`, `fase1 completa`, `bitácora: subida a GitHub…`, `fase2`, `fase3`, `tests`, `Rediseño del frontend…` y `CI/CD: desplegar en Render…`, en `origin/main`.
+- **🌐 En internet:** web https://catalogo-web-apu4.onrender.com · API https://catalogo-api-gqrj.onrender.com/products (Render free + Atlas, con CI/CD en GitHub Actions). Ver DESPLIEGUE.md.
+- **⚠️ Seguridad pendiente:** el token de GitHub actual se pegó en el chat, así que hay que **regenerarlo** (ver Pendientes).
 
 ### Cómo arrancar y ver la aplicación (fase 3)
 Hacen falta **tres programas**, cada uno en su propia ventana de la app Terminal y **en este orden**:
@@ -249,6 +250,9 @@ Requisito: **MongoDB arrancado**.
       - Los dos con `autoDeploy: no`. El primer despliegue quedó `live` en menos de 1 minuto.
     - **Comprobado en producción:** GET `[]`, POST y DELETE contra Atlas ✅, CORS ✅, web 200 ✅ y `config.js` con la URL real ✅.
     - **La API de Render no expone los deploy hooks**, así que el job `deploy` llama a `POST /v1/services/<id>/deploys` con el secreto **`RENDER_API_KEY`** (guardado con `gh secret set`). Actions pasa a `checkout@v7` y `setup-node@v7`. Se actualizaron `DESPLIEGUE.md` ("Estado actual" y paso 4) y una nota en `render.yaml`.
+    - **Ciclo CI/CD completo comprobado:** el push de `e09e310` lanzó Actions: tests ✅ (47 s) → despliegue ✅ → Render desplegó `e09e310` en los 2 servicios (`trigger: api`) → `live`. La captura de la web en producción carga desde Atlas ✅ (la BD está vacía).
+    - **🎉 Desplegado:** web https://catalogo-web-apu4.onrender.com · API https://catalogo-api-gqrj.onrender.com/products
+28. **Nombre de la tienda:** el usuario pidió que en la web ponga **"La tiendita del Eneko"** en lugar de "Catálogo de tecnología". Se cambió en `index.html`, en el `<h1>` y en el `<title>` de la pestaña (que antes era "Catálogo de productos"). No aparecía en ningún otro sitio. Commit y push, y GitHub Actions lo desplegó.
 
 ---
 
@@ -271,7 +275,8 @@ Requisito: **MongoDB arrancado**.
 - [x] Rediseño del frontend (gráfico, titular, grid, iconos); tests pasan.
 - [ ] El usuario revisa el diseño en el navegador.
 - [x] Ficheros y guía de despliegue (Render + Atlas + GitHub Actions) preparados y verificados en local.
-- [ ] Commit del rediseño y el despliegue (cuando el usuario lo pida).
-- [ ] **Usuario:** seguir `DESPLIEGUE.md`: crear Atlas M0 → revocar el token antiguo y crear uno nuevo con Contents + Workflows → push → Blueprint en Render → deploy hooks como secretos en GitHub.
+- [x] Despliegue en Render + Atlas + GitHub Actions funcionando (20/11/2026).
+- [ ] **Seguridad:** regenerar el token de GitHub (se pegó en el chat). Para hacer push después, guardar el nuevo en el llavero desde la app Terminal. No afecta al despliegue.
+- [ ] (Opcional) Al acabar el curso: suspender los servicios de Render, revocar la API key de Render (y quitar el secreto `RENDER_API_KEY`), borrar el usuario `catalogo_app` y la regla `0.0.0.0/0` de Atlas y borrar `~/.catalogo-secrets/`.
 - [ ] (Opcional) Borrar el producto de prueba "Monitor 27".
 - [ ] **Revocar el token** que se pegó en el chat (GitHub → Settings → Developer settings → Fine-grained tokens), crear uno nuevo y, en el próximo push, introducirlo desde la app Terminal (o pedírselo a Claude para que actualice el llavero sin pegarlo en el chat).
