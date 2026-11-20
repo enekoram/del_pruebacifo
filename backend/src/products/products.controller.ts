@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
-import { Product, ProductInput } from './product.js';
+import { ProductInput } from './product.schema.js';
 import { ProductsService } from './products.service.js';
 
 // =========================================================
@@ -15,32 +15,32 @@ export class ProductsController {
 
   // GET /products → lista todos
   @Get()
-  findAll(): Product[] {
+  findAll() {
     return this.productsService.findAll();
   }
 
   // GET /products/:id → uno concreto
-  // Lo que llega en la URL es texto ("3"), por eso lo pasamos a número
+  // En MongoDB los ids son texto (p. ej. "674a1f..."), así que se pasan tal cual
   @Get(':id')
-  findOne(@Param('id') id: string): Product {
-    return this.productsService.findOne(Number(id));
+  findOne(@Param('id') id: string) {
+    return this.productsService.findOne(id);
   }
 
   // POST /products → crea uno con los datos del cuerpo (body) de la petición
   @Post()
-  create(@Body() input: ProductInput): Product {
+  create(@Body() input: ProductInput) {
     return this.productsService.create(input);
   }
 
   // PUT /products/:id → edita uno
   @Put(':id')
-  update(@Param('id') id: string, @Body() input: ProductInput): Product {
-    return this.productsService.update(Number(id), input);
+  update(@Param('id') id: string, @Body() input: ProductInput) {
+    return this.productsService.update(id, input);
   }
 
   // DELETE /products/:id → borra uno
   @Delete(':id')
-  remove(@Param('id') id: string): void {
-    this.productsService.remove(Number(id));
+  remove(@Param('id') id: string) {
+    return this.productsService.remove(id);
   }
 }

@@ -9,17 +9,22 @@ Se lee al empezar cada sesión y se actualiza al terminar cada paso o al tomar u
 
 - **Fase 1** (frontend solo): **TERMINADA y comprobada** el 20/11/2026.
 - **Fase 2** (backend NestJS): **TERMINADA y comprobada** el 20/11/2026. La hizo Claude durante el descanso del usuario; las decisiones están marcadas con *(fase 2, Claude)*. El usuario la probó en el navegador y dio el visto bueno.
-- **Siguiente:** **fase 3 (MongoDB)**. El usuario la ha pedido; primero hay que decidir cómo instalar MongoDB en local.
-- **Git:** commits `fase1`, `fase1 completa`, `bitácora: subida a GitHub…` y `fase2`, en `origin/main`.
+- **Fase 3** (MongoDB + Mongoose): **TERMINADA y comprobada** el 20/11/2026. Los datos sobreviven a reiniciar el backend; el usuario lo comprobó en el navegador y dio el visto bueno.
+- **🎉 Proyecto completo:** las 3 fases están terminadas. Flujo final: navegador → fetch → API REST (NestJS) → Mongoose → MongoDB.
+- **Siguiente:** nada pendiente del alcance del CLAUDE.md. Cualquier mejora nueva hay que proponerla y aprobarla antes.
+- **Git:** commits `fase1`, `fase1 completa`, `bitácora: subida a GitHub…`, `fase2` y `fase3`, en `origin/main`.
 - **⚠️ Seguridad pendiente:** el token se pegó en el chat, así que hay que **revocarlo y crear otro** (ver Pendientes).
 
-### Cómo arrancar y ver la aplicación (fase 2)
-Hacen falta **dos servidores**, cada uno en su propia ventana de la app Terminal:
-1. **Backend (API):** `cd backend` y `npm run start:dev` → http://localhost:3000/products (se reinicia solo al guardar cambios).
-2. **Frontend:** desde la raíz del proyecto, `npx serve frontend -l 8080` → abrir **http://localhost:8080**.
+### Cómo arrancar y ver la aplicación (fase 3)
+Hacen falta **tres programas**, cada uno en su propia ventana de la app Terminal y **en este orden**:
+1. **Base de datos (MongoDB):** `~/mongodb/bin/mongod --dbpath ~/mongodb/data --bind_ip 127.0.0.1` → escucha en `localhost:27017`.
+2. **Backend (API):** `cd backend` y `npm run start:dev` → http://localhost:3000/products (se reinicia solo al guardar cambios).
+3. **Frontend:** desde la raíz del proyecto, `npx serve frontend -l 8080` → abrir **http://localhost:8080**.
 - Para pararlos: `Ctrl + C` en cada ventana.
+- Si MongoDB no está arrancado, el backend se queda reintentando la conexión y la API no responde.
 - Si el backend no está arrancado, la web muestra el aviso "No se puede conectar con el backend…".
-- Al reiniciar el backend se pierden los productos añadidos y vuelven los 2 de ejemplo (viven en memoria del backend). Recargar la web **ya no** los borra.
+- Los productos **ya no se pierden** al recargar la web ni al reiniciar el backend: están en MongoDB (`~/mongodb/data`).
+- **Ver los datos directamente en la base de datos:** `~/mongodb/bin/mongosh catalog` y dentro `db.products.find()` (salir con `exit`).
 
 ### Ficheros actuales
 | Fichero | Qué es | Estado |
@@ -29,13 +34,14 @@ Hacen falta **dos servidores**, cada uno en su propia ventana de la app Terminal
 | `.gitignore` | Ficheros que git ignora: `.DS_Store`, `node_modules/`, `dist/`, `*.tsbuildinfo` | — |
 | `frontend/index.html` | Estructura: formulario y tabla | Terminado |
 | `frontend/styles.css` | Apariencia: tarjetas blancas, acento índigo, adaptado a móvil | Terminado |
-| `frontend/app.js` | Comportamiento: pide y envía los productos a la API con `fetch` (fase 2) | Hecho, falta prueba del usuario |
-| `backend/src/main.ts` | Punto de entrada: arranca la API en el puerto 3000 con CORS activado | Hecho |
-| `backend/src/app.module.ts` | Módulo raíz: "enchufa" el módulo de productos | Hecho |
-| `backend/src/products/product.ts` | Forma de los datos: clases `Product` y `ProductInput` | Hecho |
-| `backend/src/products/products.controller.ts` | Rutas HTTP: GET/POST `/products`, GET/PUT/DELETE `/products/:id` | Hecho |
-| `backend/src/products/products.service.ts` | Lógica y datos: array en memoria del backend con los 2 de ejemplo | Hecho |
-| `backend/src/products/products.module.ts` | Agrupa el controlador y el servicio de productos | Hecho |
+| `frontend/app.js` | Comportamiento: pide y envía los productos a la API con `fetch` (desde la fase 2; sin cambios en la fase 3) | Terminado |
+| `backend/src/main.ts` | Punto de entrada: arranca la API en el puerto 3000 con CORS activado | Terminado |
+| `backend/src/app.module.ts` | Módulo raíz: conexión a MongoDB (`mongodb://localhost:27017/catalog`) y módulo de productos | Hecho (fase 3) |
+| `backend/src/products/product.schema.ts` | Esquema de Mongoose (`Product`), traducción de `_id` a `id` al enviar JSON y la clase `ProductInput`. Sustituye a `product.ts` | Hecho (fase 3) |
+| `backend/src/products/products.controller.ts` | Rutas HTTP: GET/POST `/products`, GET/PUT/DELETE `/products/:id`. El id es texto | Hecho (fase 3) |
+| `backend/src/products/products.service.ts` | Lógica: usa el modelo de Mongoose (`find`, `findById`, `create`, `findByIdAndUpdate`, `findByIdAndDelete`) | Hecho (fase 3) |
+| `backend/src/products/products.module.ts` | Agrupa el controlador, el servicio y el modelo `Product` (`MongooseModule.forFeature`) | Hecho (fase 3) |
+| `~/mongodb/` (fuera del proyecto) | MongoDB instalado: `bin/` (`mongod`, `mongosh`) y `data/` (los datos) | Instalado (fase 3) |
 | `backend/package.json`, `tsconfig*.json`, `nest-cli.json`… | Configuración generada por el CLI de Nest | Generado |
 
 ### Entorno (comprobado el 19/11/2026)
@@ -44,7 +50,10 @@ Hacen falta **dos servidores**, cada uno en su propia ventana de la app Terminal
 | Sistema | macOS 15.5 |
 | Navegadores | Google Chrome y Safari |
 | Node / npm / npx | v26.13.1 / 11.20.0 / 11.20.0 (para la fase 2) |
-| MongoDB (`mongod`, `mongosh`) | No instalado (para la fase 3) |
+| MongoDB (`mongod`) | 9.0.8, descarga oficial para arm64, instalado el 20/11/2026 en `~/mongodb/bin` (sin Homebrew ni permisos de administrador) |
+| mongosh | 2.14.3, en `~/mongodb/bin` |
+| Usuario de macOS | **No es administrador** (no puede instalar Homebrew sin la contraseña de un administrador) |
+| Procesador | Apple Silicon (arm64) |
 | Git | 2.39.5 (Apple Git-154), instalado el 20/11/2026 con las Command Line Tools de Xcode |
 | Python | Debería estar disponible desde el 20/11/2026 (viene con las Command Line Tools); no comprobado |
 | NestJS | 12 (CLI `@nestjs/cli@12.0.14`, ejecutado con `npx`, sin instalar global) |
@@ -94,6 +103,17 @@ Hacen falta **dos servidores**, cada uno en su propia ventana de la app Terminal
 | 20/11/2026 | *(fase 2, Claude)* En `app.js`, tras cada crear/editar/borrar se vuelve a pedir la lista con `loadProducts()` | Una sola fuente de verdad (el backend) y código más simple |
 | 20/11/2026 | *(fase 2, Claude)* Si el backend no responde, se muestra un `alert` ("No se puede conectar con el backend…") y el error en la consola | Sin eso, la web fallaría en silencio |
 | 20/11/2026 | *(fase 2, Claude)* Se ignoran en git `node_modules/`, `dist/` y `*.tsbuildinfo` | Se regeneran con `npm install` y `npm run build` |
+| 20/11/2026 | El commit de la fase 2 se llama `fase2` | El usuario no dio nombre; lo eligió Claude |
+| 20/11/2026 | Instalar MongoDB con la **descarga oficial en `~/mongodb/`** (opción A). El usuario eligió primero Homebrew (B), pero su usuario no es administrador y cambió a A | Sin permisos de administrador; no instala nada en el sistema. Se desinstala borrando la carpeta |
+| 20/11/2026 | MongoDB 9.0.8 + mongosh 2.14.3. Se comprobó el checksum SHA-256 de MongoDB y la firma de Apple de ambos (TeamIdentifier `4XWMY46275`). Se borraron `mongos` e `install_compass`, que no se usan | Versiones estables actuales; verificar lo descargado |
+| 20/11/2026 | MongoDB escucha solo en `127.0.0.1:27017` y guarda los datos en `~/mongodb/data` (fuera del proyecto y de git) | Solo local; los datos no se suben a GitHub |
+| 20/11/2026 | *(fase 3, Claude)* `mongoose` 9.12.2 y `@nestjs/mongoose` 12.0.1 | Últimas versiones, compatibles con Nest 12 |
+| 20/11/2026 | *(fase 3, Claude)* Base de datos `catalog`, colección `products` | Nombre corto y en inglés, como el resto de identificadores |
+| 20/11/2026 | *(fase 3, Claude)* La BD **empieza vacía**, sin productos de ejemplo | Era la recomendación de Claude; el usuario no respondió a esa pregunta |
+| 20/11/2026 | *(fase 3, Claude)* La API devuelve `id` en lugar de `_id` (con `toJSON.transform` en el esquema) y no envía `__v` (`versionKey: false`) | Así **el frontend no cambia**, como pide el CLAUDE.md. Recomendación de Claude, sin respuesta del usuario |
+| 20/11/2026 | *(fase 3, Claude)* `createdAt` es un `@Prop({ default: Date.now })` explícito (no la opción `timestamps` de Mongoose) | Se ve en el esquema de dónde sale la fecha y no añade `updatedAt` |
+| 20/11/2026 | *(fase 3, Claude)* `product.ts` se sustituye por `product.schema.ts`, que contiene el esquema y `ProductInput` | Un único fichero con la forma de los datos |
+| 20/11/2026 | *(fase 3, Claude)* Limitación conocida: si se pide un id con formato no válido (p. ej. `/products/abc`), la API responde 500 en lugar de 404 | El frontend siempre usa ids reales; manejarlo añadiría código. Se puede mejorar si se pide |
 
 > Las decisiones del 19/11 sobre categoría, precio, validación, borrar, editar, datos de ejemplo, fecha y pasos las tomó Claude porque el usuario se las delegó ("toma tú las decisiones").
 
@@ -147,7 +167,20 @@ Hacen falta **dos servidores**, cada uno en su propia ventana de la app Terminal
     - **No probado en un navegador real:** falta que el usuario lo compruebe.
     - Los dos servidores quedaron arrancados en segundo plano desde la sesión de Claude.
 15. Claude abrió http://localhost:8080 en el navegador. El usuario lo probó: **"Lo veo todo bien"**. **La fase 2 queda terminada.**
-16. El usuario pidió commit, push y empezar la fase 3. Se hizo el commit **`fase2`** (el nombre lo eligió Claude) y el push.
+16. El usuario pidió commit, push y empezar la fase 3. Se hizo el commit **`fase2`** (el nombre lo eligió Claude) y el push. El push funcionó con el token guardado, así que **ese token aún no se ha revocado**.
+17. **Plan de la fase 3:** el Mac es arm64, MongoDB no estaba instalado y el puerto 27017 estaba libre. Se propusieron A (descarga oficial) o B (Homebrew) y 3 preguntas más. El usuario eligió B, pero **no es administrador**, así que pasó a A. A las preguntas sobre datos de ejemplo e `id` no respondió, y se aplicaron las recomendaciones de Claude.
+18. **Fase 3, paso 1 (instalar MongoDB):** se descargaron MongoDB 9.0.8 y mongosh 2.14.3 (checksum y firmas verificados), se instalaron en `~/mongodb/bin` y se arrancó `mongod`. `mongosh` responde.
+19. **Fase 3, paso 2:** `npm install mongoose@9.12.2 @nestjs/mongoose@12.0.1`. Hubo un aviso sobre `fsevents`, una dependencia opcional de macOS, que no afecta.
+20. **Fase 3, pasos 3-5:** conexión en `app.module.ts`, esquema `product.schema.ts` (se borró `product.ts`), servicio con el modelo de Mongoose y controlador con ids de texto. Hubo un error de TypeScript en el `transform` del esquema, que se resolvió tipando el parámetro como `Record<string, any>`.
+21. **Fase 3, comprobación:**
+    - **Con `curl`:** la BD empieza vacía ✅, POST devuelve `id` de texto y `createdAt` ✅, GET /:id ✅, PUT ✅, DELETE ✅, 404 tras borrar ✅.
+    - **Con `mongosh`:** se ve el documento guardado con su `_id` y `ISODate` ✅.
+    - **Persistencia:** se paró el backend del todo y se volvió a arrancar, y el producto seguía ahí ✅.
+    - **Frontend:** `git diff` sin cambios ✅.
+    - **Quedó un producto de prueba, "Monitor 27"**, en la BD.
+    - Falta la prueba del usuario en el navegador.
+22. Claude abrió la web. El usuario creó "Prueba fase 3" y pidió reiniciar el backend. Claude lo paró del todo y lo arrancó de nuevo, y los 2 productos seguían ahí. El usuario dio el **visto bueno de la fase 3**: **proyecto completo**.
+23. Commit **`fase3`** (el nombre lo eligió Claude) y push.
 
 ---
 
@@ -162,6 +195,8 @@ Hacen falta **dos servidores**, cada uno en su propia ventana de la app Terminal
 - [x] El usuario prueba la fase 2 en el navegador: funciona.
 - [x] Commit y push de la fase 2 (`fase2`).
 - [x] Visto bueno para empezar la fase 3.
-- [ ] Fase 3: decidir cómo instalar MongoDB, instalarlo y conectar el backend con Mongoose.
+- [x] Fase 3: MongoDB instalado y backend conectado con Mongoose; probado con `curl`, `mongosh` y reiniciando el backend.
+- [x] El usuario prueba la fase 3 en el navegador y da el visto bueno.
+- [x] Commit y push de la fase 3 (`fase3`).
+- [ ] (Opcional) Borrar el producto de prueba "Monitor 27".
 - [ ] **Revocar el token** que se pegó en el chat (GitHub → Settings → Developer settings → Fine-grained tokens), crear uno nuevo y, en el próximo push, introducirlo desde la app Terminal (o pedírselo a Claude para que actualice el llavero sin pegarlo en el chat).
-- Para la fase 3 habrá que decidir cómo instalar MongoDB en local, porque ahora no está instalado.

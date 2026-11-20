@@ -1,78 +1,56 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Product, ProductInput } from './product.js';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Product, ProductInput } from './product.schema.js';
 
 // =========================================================
-// SERVICIO: guarda los productos y sabe trabajar con ellos.
-// En la fase 2 los datos viven en un array EN MEMORIA del backend:
-// se pierden al reiniciar el servidor.
+// SERVICIO: sabe trabajar con los productos.
+// En la fase 3 ya no hay array: los datos se guardan en MongoDB,
+// y el "modelo" de Mongoose es quien habla con la base de datos.
+// Las operaciones con la base de datos tardan, por eso usamos async/await.
 // =========================================================
 @Injectable()
 export class ProductsService {
-  // Los mismos 2 productos de ejemplo que tenía el frontend en la fase 1
-  private products: Product[] = [
-    {
-      id: 1,
-      name: 'MacBook Air 13',
-      category: 'Portátiles',
-      price: 1199.99,
-      description: 'Portátil ligero con chip M3 y 16 GB de RAM.',
-      createdAt: '2026-11-10T10:00:00.000Z',
-    },
-    {
-      id: 2,
-      name: 'Auriculares inalámbricos',
-      category: 'Audio',
-      price: 89.9,
-      description: 'Con cancelación de ruido y 30 horas de batería.',
-      createdAt: '2026-11-15T17:30:00.000Z',
-    },
-  ];
+  // Nest nos inyecta el modelo de Mongoose para la colección "products"
+  constructor(
+    @InjectModel(Product.name) private readonly productModel: Model<Product>,
+  ) {}
 
-  // Siguiente id que se asignará a un producto nuevo
-  private nextId = 3;
-
-  // LISTAR: devuelve todos los productos
-  findAll(): Product[] {
-    return this.products;
+  // LISTAR: todos los documentos de la colección
+  async findAll() {
+    return this.productModel.find();
   }
 
   // OBTENER UNO: busca por id; si no existe, responde 404 (Not Found)
-  findOne(id: number): Product {
-    const product = this.products.find((item) => item.id === id);
+  async findOne(id: string) {
+    const product = await this.productModel.findById(id);
     if (!product) {
       throw new NotFoundException('No existe el producto con id ' + id);
     }
     return product;
   }
 
-  // CREAR: el backend pone el id y la fecha de creación
-  create(input: ProductInput): Product {
-    const newProduct: Product = {
-      id: this.nextId,
-      name: input.name,
-      category: input.category,
-      price: input.price,
-      description: input.description,
-      createdAt: new Date().toISOString(),
-    };
-    this.nextId = this.nextId + 1;
-    this.products.push(newProduct);
-    return newProduct;
+  // CREAR: MongoDB pone el id y Mongoose la fecha de creación
+  async create(input: ProductInput) {
+    return this.productModel.create(input);
   }
 
-  // EDITAR: cambia los datos; el id y la fecha de creación no cambian
-  update(id: number, input: ProductInput): Product {
-    const product = this.findOne(id);
-    product.name = input.name;
-    product.category = input.category;
-    product.price = input.price;
-    product.description = input.description;
+  // EDITAR: cambia los datos y devuelve el producto ya actualizado
+  async update(id: string, input: ProductInput) {
+    const product = await this.productModel.findByIdAndUpdate(id, input, {
+      returnDocument: 'after',
+    });
+    if (!product) {
+      throw new NotFoundException('No existe el producto con id ' + id);
+    }
     return product;
   }
 
-  // BORRAR: comprueba que existe y lo quita del array
-  remove(id: number): void {
-    this.findOne(id);
-    this.products = this.products.filter((item) => item.id !== id);
+  // BORRAR: lo elimina de la base de datos
+  async remove(id: string) {
+    const product = await this.productModel.findByIdAndDelete(id);
+    if (!product) {
+      throw new NotFoundException('No existe el producto con id ' + id);
+    }
   }
 }
