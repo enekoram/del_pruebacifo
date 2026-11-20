@@ -9,7 +9,8 @@ Se lee al empezar cada sesión y se actualiza al terminar cada paso o al tomar u
 
 - **Fase:** 1 · Frontend solo. **TERMINADA y comprobada** el 20/11/2026 (los 5 pasos, CRUD completo en memoria).
 - **Siguiente:** esperar el visto bueno del usuario para empezar la **fase 2 (backend NestJS)**. No se empieza hasta que lo dé.
-- **Git:** commits `fase1` (pasos 1-4) y `fase1 completa` (paso 5 + CLAUDE.md + bitácora). Remoto `origin` en GitHub. Pendiente: el primer push, que hace el usuario desde la app Terminal con su token.
+- **Git:** commits `fase1` (pasos 1-4) y `fase1 completa` (paso 5 + CLAUDE.md + bitácora). Remoto `origin` en GitHub. **Ambos commits subidos a `origin/main`** (20/11/2026).
+- **⚠️ Seguridad pendiente:** el token se pegó en el chat, así que hay que **revocarlo y crear otro** (ver Pendientes).
 - **Cómo ver la web:** doble clic en `frontend/index.html`, o escribir `! open frontend/index.html` en el prompt.
 
 ### Ficheros actuales
@@ -104,6 +105,7 @@ Se lee al empezar cada sesión y se actualiza al terminar cada paso o al tomar u
 9. El usuario comprobó el **paso 5 (editar)**: funciona. **La fase 1 queda terminada.**
 10. **GitHub:** el usuario pidió conectar `https://github.com/enekoram/del_pruebacifo.git`, que es público y estaba vacío. No había `gh`, Homebrew ni claves SSH, y el usuario eligió HTTPS con token. Se cambió el email de git por el privado de GitHub, se reescribió el commit `fase1`, se añadió el remoto `origin` y la rama pasó a llamarse `main`.
 11. Se hizo el commit **`fase1 completa`** (paso 5, cambios del CLAUDE.md y bitácora) para que el primer push suba la fase 1 entera.
+12. El usuario estaba en clase y pegó el token en el chat. Claude lo guardó en el llavero de macOS (`git credential approve`) e hizo `git push -u origin main`: se subieron `fase1` y `fase1 completa`. El token no está en ningún fichero del proyecto ni en la URL del remoto, pero sí en el historial de la conversación, así que debe revocarse.
 
 ---
 
@@ -113,6 +115,8 @@ Se lee al empezar cada sesión y se actualiza al terminar cada paso o al tomar u
 - [x] Fase 1 completa y comprobada.
 - [ ] Visto bueno del usuario para empezar la fase 2.
 - [x] Commit `fase1 completa`.
-- [ ] Primer push a GitHub (lo hace el usuario con su token).
+- [x] Primer push a GitHub.
+- [ ] **Revocar el token** que se pegó en el chat (GitHub → Settings → Developer settings → Fine-grained tokens), crear uno nuevo y, en el próximo push, introducirlo desde la app Terminal (o pedírselo a Claude para que actualice el llavero sin pegarlo en el chat).
+- [ ] Hacer commit y push de esta actualización de la bitácora cuando el usuario lo pida.
 - Para la fase 2 habrá que hablar de cómo crear el proyecto NestJS (CLI, dependencias) antes de instalar nada.
 - Para la fase 3 habrá que decidir cómo instalar MongoDB en local, porque ahora no está instalado.
