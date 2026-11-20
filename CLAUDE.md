@@ -10,8 +10,9 @@ Prima la claridad sobre la sofisticación. Menos código y más simple es mejor.
 - Backend: NestJS (TypeScript).
 - Base de datos: MongoDB en local, con Mongoose (@nestjs/mongoose).
 - Todo en local. Sin autenticación, sin Docker, sin despliegue.
-- Git solo en local, para guardar puntos de control. Commits únicamente
-  cuando el usuario los pida. Sin repositorio remoto.
+- Git para guardar puntos de control. Commits y push únicamente cuando el
+  usuario los pida. Remoto: https://github.com/enekoram/del_pruebacifo.git
+  (público; autenticación HTTPS con token guardado en el llavero de macOS).
 
 ## Alcance
 - Entidad única: Producto con los campos nombre, categoría, precio,

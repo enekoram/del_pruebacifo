@@ -25,6 +25,9 @@ let products = [
 // Siguiente id que se asignará a un producto nuevo
 let nextId = 3;
 
+// id del producto que se está editando (null = estamos creando uno nuevo)
+let editingId = null;
+
 // =========================================================
 // REFERENCIAS A ELEMENTOS DEL HTML (por su id)
 // =========================================================
@@ -34,6 +37,8 @@ const categoryInput = document.getElementById("category");
 const priceInput = document.getElementById("price");
 const descriptionInput = document.getElementById("description");
 const productList = document.getElementById("product-list");
+const formTitle = document.getElementById("form-title");
+const cancelButton = document.getElementById("cancel-button");
 
 // =========================================================
 // FUNCIONES DE FORMATO (cómo se muestran los datos)
@@ -67,12 +72,16 @@ function renderProducts() {
     addCell(row, product.description || "—");
     addCell(row, formatDate(product.createdAt));
 
-    // Celda de acciones (el botón Editar se activará en el paso 5)
+    // Celda de acciones: botones Editar y Borrar
     const actionsCell = document.createElement("td");
 
     const editButton = document.createElement("button");
     editButton.textContent = "Editar";
     editButton.className = "button-edit";
+    // Al pulsarlo, carga ESTE producto en el formulario
+    editButton.addEventListener("click", function () {
+      startEditing(product);
+    });
 
     const deleteButton = document.createElement("button");
     deleteButton.textContent = "Borrar";
@@ -98,29 +107,70 @@ function addCell(row, text) {
 }
 
 // =========================================================
-// CREAR: se ejecuta al enviar el formulario
+// GUARDAR: se ejecuta al enviar el formulario.
+// Si no estamos editando, CREA un producto; si sí, lo ACTUALIZA.
 // =========================================================
 form.addEventListener("submit", function (event) {
   // Evita que el navegador recargue la página (su comportamiento por defecto)
   event.preventDefault();
 
-  // Construimos el producto con los valores del formulario
-  const newProduct = {
-    id: nextId,
-    name: nameInput.value.trim(),
-    category: categoryInput.value,
-    price: Number(priceInput.value),
-    description: descriptionInput.value.trim(),
-    createdAt: new Date().toISOString()
-  };
-  nextId = nextId + 1;
+  if (editingId === null) {
+    // CREAR: construimos el producto con los valores del formulario
+    const newProduct = {
+      id: nextId,
+      name: nameInput.value.trim(),
+      category: categoryInput.value,
+      price: Number(priceInput.value),
+      description: descriptionInput.value.trim(),
+      createdAt: new Date().toISOString()
+    };
+    nextId = nextId + 1;
+    products.push(newProduct);
+  } else {
+    // EDITAR: buscamos el producto y cambiamos sus datos.
+    // El id y la fecha de creación no cambian.
+    const product = products.find(function (item) {
+      return item.id === editingId;
+    });
+    product.name = nameInput.value.trim();
+    product.category = categoryInput.value;
+    product.price = Number(priceInput.value);
+    product.description = descriptionInput.value.trim();
+  }
 
-  // Lo guardamos en el array y redibujamos la tabla
-  products.push(newProduct);
   renderProducts();
 
-  // Dejamos el formulario limpio para el siguiente producto
+  // Dejamos el formulario limpio y en modo "Nuevo producto"
+  resetForm();
+});
+
+// =========================================================
+// EDITAR: rellena el formulario con los datos de un producto
+// =========================================================
+function startEditing(product) {
+  editingId = product.id;
+
+  nameInput.value = product.name;
+  categoryInput.value = product.category;
+  priceInput.value = product.price;
+  descriptionInput.value = product.description;
+
+  // El formulario cambia a modo edición
+  formTitle.textContent = "Editando: " + product.name;
+  cancelButton.hidden = false;
+}
+
+// Deja el formulario vacío y en modo "Nuevo producto"
+function resetForm() {
+  editingId = null;
   form.reset();
+  formTitle.textContent = "Nuevo producto";
+  cancelButton.hidden = true;
+}
+
+// El botón Cancelar abandona la edición sin guardar
+cancelButton.addEventListener("click", function () {
+  resetForm();
 });
 
 // =========================================================
@@ -137,6 +187,11 @@ function deleteProduct(id) {
   products = products.filter(function (product) {
     return product.id !== id;
   });
+
+  // Si borramos el producto que se estaba editando, salimos del modo edición
+  if (id === editingId) {
+    resetForm();
+  }
 
   renderProducts();
 }
