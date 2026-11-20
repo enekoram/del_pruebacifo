@@ -239,6 +239,16 @@ Requisito: **MongoDB arrancado**.
     - Creado el usuario **`catalogo_app`** (solo `readWrite@catalog`) con una contraseña aleatoria (`openssl rand -hex 24`) en `~/.catalogo-secrets/atlas_db_password`. Añadido el acceso **`0.0.0.0/0`** ("Render free").
     - `MONGODB_URI` guardada en `~/.catalogo-secrets/mongodb_uri`. `mongosh` hace ping ✅ (el primer intento dio *bad auth* mientras se activaba el usuario). El backend compilado contra Atlas: GET/POST/DELETE ✅, y la BD quedó vacía.
     - **GitHub CLI (`gh`)** instalada en `~/tools/bin/gh` (checksum OK).
+    - Commit local `a766933` (rediseño + despliegue), sin secretos.
+    - **Token de GitHub:** el usuario no lo había borrado y pegó en el chat un token **regenerado** con Contents + Workflows + Secrets. Se guardó en `~/.catalogo-secrets/github_token` y en el llavero. ⚠️ Está en el chat: hay que **regenerarlo al terminar**.
+    - Push de `a766933` ✅ (el permiso Workflows funciona). **Primera ejecución de Actions:** tests ✅ (36 s) y despliegue ❌, como se esperaba (aún no había servicios). Aviso: `checkout@v4` y `setup-node@v4` usan Node 20, que está obsoleto.
+    - El usuario conectó GitHub con Render (app de Render solo en `del_pruebacifo`) y guardó la API key de Render en `~/.catalogo-secrets/render_api_key` desde la app Terminal (con ayuda paso a paso).
+    - **Servicios creados con la API de Render** (script de Node que lee los secretos sin mostrarlos), workspace "My Workspace":
+      - `catalogo-api` → `srv-dc042rlg1s2s73e3p26g` → **https://catalogo-api-gqrj.onrender.com** (Render añadió el sufijo `-gqrj`), con las variables `NODE_VERSION=24` y `MONGODB_URI`.
+      - `catalogo-web` → `srv-dc042v3rjlhs7387qgsg` → **https://catalogo-web-apu4.onrender.com**, con `API_BASE_URL=https://catalogo-api-gqrj.onrender.com`.
+      - Los dos con `autoDeploy: no`. El primer despliegue quedó `live` en menos de 1 minuto.
+    - **Comprobado en producción:** GET `[]`, POST y DELETE contra Atlas ✅, CORS ✅, web 200 ✅ y `config.js` con la URL real ✅.
+    - **La API de Render no expone los deploy hooks**, así que el job `deploy` llama a `POST /v1/services/<id>/deploys` con el secreto **`RENDER_API_KEY`** (guardado con `gh secret set`). Actions pasa a `checkout@v7` y `setup-node@v7`. Se actualizaron `DESPLIEGUE.md` ("Estado actual" y paso 4) y una nota en `render.yaml`.
 
 ---
 

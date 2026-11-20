@@ -3,6 +3,17 @@
 Cómo publicar en internet el catálogo (frontend + backend + base de datos)
 usando solo planes **gratuitos**.
 
+## ✅ Estado actual (desplegado el 20/11/2026)
+
+| Pieza | Dirección / identificador |
+|---|---|
+| **Web** (Render Static Site `catalogo-web`) | https://catalogo-web-apu4.onrender.com · `srv-dc042v3rjlhs7387qgsg` |
+| **API** (Render Web Service `catalogo-api`, free, Frankfurt) | https://catalogo-api-gqrj.onrender.com/products · `srv-dc042rlg1s2s73e3p26g` |
+| **Base de datos** | MongoDB Atlas, "Project 0" → `Cluster0` (M0, AWS París), BD `catalog`, usuario `catalogo_app` (solo `readWrite@catalog`) |
+| **CI/CD** | GitHub Actions `.github/workflows/ci-cd.yml` → si los tests pasan, llama a la API de Render (secreto `RENDER_API_KEY`) |
+
+Cómo se montó: Claude lo hizo por línea de comandos (Atlas CLI, GitHub CLI y la API de Render) en lugar de usar el Blueprint, con los mismos ajustes que `render.yaml`. Los secretos están en `~/.catalogo-secrets/` (en el Mac del usuario), en Render y en GitHub Secrets; nunca en el repositorio. Los pasos 1-4 de abajo explican cómo hacerlo **a mano** desde cero.
+
 ---
 
 ## 0. La idea general
@@ -13,7 +24,7 @@ usando solo planes **gratuitos**.
                        │                   1. tests (API + web)  │
                        │                   2. si pasan → avisa   │
                        └────────────────────────┬───────────────┘
-                                                │ deploy hooks
+                                                │ API de Render
                          ┌──────────────────────┴──────────────────────┐
                          ▼                                             ▼
   navegador ──▶  catalogo-web (Render, Static Site)  ──fetch──▶  catalogo-api (Render, Web Service)
@@ -82,7 +93,7 @@ El token antiguo **se pegó en el chat**, así que hay que revocarlo. Además, p
    ```
    Te pedirá **Username** (`enekoram`) y **Password**: ahí pegas el **token nuevo**.
 
-Con esto el código, incluido el workflow, queda subido. Ese primer push lanza GitHub Actions: el job de tests debería pasar, y el de despliegue **fallará** porque aún no hay deploy hooks. Es normal; se arregla en el paso 4.
+Con esto el código, incluido el workflow, queda subido. Ese primer push lanza GitHub Actions: el job de tests debería pasar, y el de despliegue **fallará** porque aún no existen los servicios ni el secreto `RENDER_API_KEY`. Es normal; se arregla en el paso 4.
 
 ---
 
@@ -104,16 +115,18 @@ Con esto el código, incluido el workflow, queda subido. Ese primer push lanza G
 
 ---
 
-## 4. Conectar GitHub Actions con Render (deploy hooks)
+## 4. Conectar GitHub Actions con Render (API key)
 
-Un **deploy hook** es una URL secreta: quien hace un `POST` a ella le dice a Render "despliega ahora". GitHub Actions la llama solo cuando los tests pasan.
+GitHub Actions, cuando los tests pasan, hace un `POST /v1/services/<id>/deploys` a la **API de Render** por cada servicio. Para eso necesita una API key de Render.
 
-1. En Render, `catalogo-api` → **Settings** → **Deploy Hook** → copia la URL.
+1. En Render: **Account Settings** → **API Keys** → **Create API Key** → cópiala.
 2. En GitHub, el repositorio → **Settings** → **Secrets and variables** → **Actions** → **New repository secret**:
-   - Name: `RENDER_DEPLOY_HOOK_BACKEND`. Value: la URL del paso anterior.
-3. Repite con `catalogo-web`, guardándolo como **`RENDER_DEPLOY_HOOK_FRONTEND`**.
+   - Name: **`RENDER_API_KEY`**. Value: la API key.
+3. En `.github/workflows/ci-cd.yml`, `BACKEND_SERVICE_ID` y `FRONTEND_SERVICE_ID` deben ser los ids (`srv-…`) de tus servicios. Salen en la URL del panel de cada servicio.
 4. Prueba el flujo completo: en GitHub → pestaña **Actions** → el último *CI/CD* → **Re-run all jobs**. También puedes hacer cualquier commit y push.
    - ✅ `Tests (API + navegador)` en verde → ✅ `Desplegar en Render` en verde → en Render aparece un deploy nuevo en cada servicio.
+
+> Alternativa con menos permisos: los **deploy hooks** (*Settings → Deploy Hook* de cada servicio) solo permiten desplegar ese servicio, mientras que una API key da acceso a toda la cuenta. No se usaron porque la API de Render no permite leerlos, así que habría que copiarlos a mano.
 
 ---
 
@@ -130,7 +143,7 @@ Dónde mirar si algo va mal:
 |---|---|---|
 | El push se rechaza con *"refusing to allow a Personal Access Token to create or update workflow"* | Terminal | Al token le falta el permiso **Workflows** (paso 2) |
 | Falla el job de tests | GitHub → Actions → el job → el paso en rojo | Un test roto: reprodúcelo en local con `npm run test:e2e` / `npm test` |
-| Falla el job de despliegue con `curl: (3)` o 404 | GitHub → Actions | Falta un secreto `RENDER_DEPLOY_HOOK_*` o está mal copiado |
+| Falla el job de despliegue (401 o 404) | GitHub → Actions | Falta el secreto `RENDER_API_KEY`, la key se revocó o un `*_SERVICE_ID` es incorrecto |
 | La API no arranca en Render (`MongoServerSelectionError`, `bad auth`) | Render → `catalogo-api` → Logs | `MONGODB_URI` mal escrita, contraseña incorrecta o falta `0.0.0.0/0` en Atlas |
 | La web carga pero sale "No se puede conectar con el backend…" | Consola del navegador (`Cmd + Option + J`) | Backend dormido (espera 1 minuto) o `API_BASE_URL` incorrecta en `catalogo-web` |
 | La web sale sin datos y sin errores | Abre `https://catalogo-api…/products` | Es correcto: la base de datos de Atlas empieza vacía |
@@ -139,5 +152,5 @@ Dónde mirar si algo va mal:
 
 ## 6. Seguridad (léelo)
 - La API **no tiene login**: cualquiera que conozca la URL puede crear o borrar productos. Para un proyecto de aprendizaje vale, pero no metas datos reales.
-- Los secretos (`MONGODB_URI`, deploy hooks y tokens) viven **solo** en Render, en GitHub Secrets y en el llavero. Nunca en el código ni en el chat.
+- Los secretos (`MONGODB_URI`, la API key de Render y los tokens) viven **solo** en Render, en GitHub Secrets y en el llavero. Nunca en el código ni en el chat.
 - Para dejarlo todo apagado: en Render, *Suspend* en cada servicio. En Atlas, puedes borrar el cluster.

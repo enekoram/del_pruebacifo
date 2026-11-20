@@ -3,7 +3,7 @@
 # 1. test   → en cada push y pull request: arranca un MongoDB,
 #             compila el backend y pasa los tests (API + navegador).
 # 2. deploy → solo en push a main y SOLO si los tests pasan:
-#             avisa a Render (deploy hooks) para que despliegue.
+#             pide a la API de Render que despliegue los 2 servicios.
 # Guía completa: DESPLIEGUE.md
 # =========================================================
 name: CI/CD
@@ -27,10 +27,10 @@ jobs:
 
     steps:
       - name: Descargar el código
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Instalar Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
@@ -66,14 +66,26 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
-    steps:
-      # Las URLs de los deploy hooks son secretos del repositorio
-      - name: Desplegar backend
-        env:
-          HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_BACKEND }}
-        run: curl --fail --silent --show-error -X POST "$HOOK_URL"
+    env:
+      # La API key de Render es un secreto del repositorio (Settings → Secrets)
+      RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+      # Los ids de los servicios no son secretos (se ven en el panel de Render)
+      BACKEND_SERVICE_ID: srv-dc042rlg1s2s73e3p26g
+      FRONTEND_SERVICE_ID: srv-dc042v3rjlhs7387qgsg
 
-      - name: Desplegar frontend
-        env:
-          HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_FRONTEND }}
-        run: curl --fail --silent --show-error -X POST "$HOOK_URL"
+    steps:
+      - name: Desplegar backend (catalogo-api)
+        run: |
+          curl --fail --silent --show-error -X POST \
+            "https://api.render.com/v1/services/$BACKEND_SERVICE_ID/deploys" \
+            -H "Authorization: Bearer $RENDER_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{"clearCache": "do_not_clear"}'
+
+      - name: Desplegar frontend (catalogo-web)
+        run: |
+          curl --fail --silent --show-error -X POST \
+            "https://api.render.com/v1/services/$FRONTEND_SERVICE_ID/deploys" \
+            -H "Authorization: Bearer $RENDER_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{"clearCache": "do_not_clear"}'

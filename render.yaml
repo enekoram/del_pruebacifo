@@ -3,6 +3,8 @@
 # Render lo lee al hacer "New → Blueprint" con este repositorio.
 # Los secretos (sync: false) NO están aquí: se escriben en Render.
 # Guía completa: DESPLIEGUE.md
+# NOTA: los servicios reales se crearon por la API de Render con estos
+# mismos ajustes (URLs e ids en DESPLIEGUE.md → "Estado actual").
 # =========================================================
 services:
   # ---------- BACKEND: la API NestJS ----------
